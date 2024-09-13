@@ -1,0 +1,55 @@
+# Step 1: Import required libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, roc_auc_score, roc_curve
+from imblearn.over_sampling import SMOTE
+import joblib
+
+# Step 2: Load a subset of the dataset
+file_path = r"C:\Users\hp\Desktop\creditcard.csv"
+df = pd.read_csv(file_path, nrows=30000)
+
+# Step 3: Check basic information and head
+print(df.head())
+
+# Step 4: Check for missing values
+print(df.isnull().sum())
+
+# Step 5: Summary statistics for numerical columns
+print(df.describe())
+
+# Step 6:  visualization
+plt.figure(figsize=(10, 6))
+sns.histplot(df['Time'], bins=50, kde=True)
+plt.show()
+
+# Step 7: Directly go to SMOTE balancing
+X = df.drop('Class', axis=1)
+y = df['Class']
+
+# Apply SMOTE
+smote = SMOTE(random_state=42, sampling_strategy=0.2)
+X_balanced, y_balanced = smote.fit_resample(X, y)
+
+# Step 8: Split data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X_balanced, y_balanced, test_size=0.2, random_state=42)
+
+# Step 9: Train a Random Forest model with fewer estimators
+rf_model = RandomForestClassifier(n_estimators=50, random_state=42)  # Reduce to 50 estimators
+rf_model.fit(X_train, y_train)
+
+# Step 10: Predict on the test set
+y_pred = rf_model.predict(X_test)
+
+# Step 11: Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+print(f'Accuracy: {accuracy * 100:.2f}%')
+print(classification_report(y_test, y_pred))
+
+
+# Step 12: Save the model for deployment
+joblib.dump(rf_model, 'credit_fraud_rf_model_fast.pkl')
